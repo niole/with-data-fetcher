@@ -25,14 +25,19 @@ This container gets you up and running with
 import * as React from 'react';
 import withDataFetcher from 'with-data-fetcher';
 
-const DataRenderer = ({ data }: FetchResult) => {
+const DataRenderer = ({ otherData, data }: ChildProps) => {
     return (
         <>
-          {data.map((d: string) => (
-            <div>
-               {d}
-            </div>
-          ))}
+          <h1>
+            {otherData}
+          </h1>
+          <div>
+            {data.map((d: string) => (
+              <div>
+                {d}
+              </div>
+            ))}
+          </div>
         </>
     );
 };
@@ -44,11 +49,12 @@ const dataStore = [
 
 type OuterProps = { whichData: number };
 type FetchResult = { data: string[] };
+type ChildProps = FetchResult & { otherData: string }:
 
-const ComposedComponent = withDataFetcher<OuterProps, FetchResult>(
+const ComposedComponent = withDataFetcher<OuterProps, ChildProps, FetchResult>(
     async ({ whichData }) => ({ data: dataStore[whichData] }),
 )(DataRenderer);
 
-ReactDOM.render(<ComposedComponent whichData={0} />, document.body);
+ReactDOM.render(<ComposedComponent whichData={0} otherData="otherpieceofdata" />, document.body);
 
 ```
