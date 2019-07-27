@@ -169,7 +169,7 @@ describe('withDataGetter', () => {
                     }, 50);
                 });
             },
-        )(ChildComponent, CustomLoader);
+        )(ChildComponent, <CustomLoader />);
 
         const wrapper = mount(<WrappedComponent />);
 

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-const defaultLoadingScreen = () => (
+const defaultLoadingScreen = (
     <div>
         Loading...
     </div>
