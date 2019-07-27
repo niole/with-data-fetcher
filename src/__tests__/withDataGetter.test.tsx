@@ -89,9 +89,7 @@ describe('withDataGetter', () => {
             ({ query }) => [query],
         )(ChildComponent);
 
-        const wrapper = mount(
-            <WrappedComponent query="A" other="Z" />
-        );
+        const wrapper = mount(<WrappedComponent query="A" other="Z" />);
 
         setTimeout(() => {
             wrapper.update();
@@ -104,19 +102,77 @@ describe('withDataGetter', () => {
         }, 10);
     });
 
-    xit('should show loading screen before fetch returns and child has never been rendered', done => {
+    it('should show loading screen before fetch returns, default state exists, and child never rendered', () => {
+        const WrappedComponent = withDataGetter<{}, { text: string }>(
+            () => {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve({ text: 'fetched' });
+                    }, 50);
+                });
+            },
+        )(ChildComponent);
 
+        const wrapper = mount(<WrappedComponent />);
+
+        expect(wrapper.text()).toBe('Loading...');
     });
 
-    xit('should not show loading screen once initial fetch has finished', done => {
+    it('should not show loading screen once initial fetch has finished', done => {
+        const WrappedComponent = withDataGetter<{}, { text: string }>(
+            () => {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve({ text: 'fetched' });
+                    }, 50);
+                });
+            },
+        )(ChildComponent);
 
+        const wrapper = mount(<WrappedComponent />);
+
+        setTimeout(() => {
+            wrapper.update();
+            expect(wrapper.text()).toBe('fetched');
+            done();
+        }, 60);
     });
 
-    xit('should not show loading screen if initial data is supplied', done => {
+    it('should not show loading screen if initial data is supplied', () => {
+        const WrappedComponent = withDataGetter<{}, { text: string }>(
+            () => {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve({ text: 'fetched' });
+                    }, 50);
+                });
+            },
+            () => ({ text: 'child shown' }),
+        )(ChildComponent);
 
+        const wrapper = mount(<WrappedComponent />);
+
+        expect(wrapper.text()).toBe('child shown');
     });
 
-    xit('should allow use of custom loading screen', done => {
+    it('should allow use of custom loading screen', () => {
+        const CustomLoader = () => (
+            <div>
+                this is myu custom loading screen
+            </div>
+        );
+        const WrappedComponent = withDataGetter<{}, { text: string }>(
+            () => {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve({ text: 'fetched' });
+                    }, 50);
+                });
+            },
+        )(ChildComponent, CustomLoader);
 
+        const wrapper = mount(<WrappedComponent />);
+
+        expect(wrapper.find(CustomLoader)).toHaveLength(1);
     });
 });

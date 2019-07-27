@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-const defaultLoadingScreen = (
+const defaultLoadingScreen = () => (
     <div>
         Loading...
     </div>
@@ -23,29 +23,32 @@ function getData<FetchArguments, Result>(
         console.error(`fetch failed: ${error}`);
     });
 }
+
 export default function withDataGetter<FetchArguments, Result extends {}>(
     fetcher: (input: FetchArguments) => Promise<Result>,
     defaultState?: (props: FetchArguments) => Result,
     whenChanges?: (props: FetchArguments) => any[],
-): (Component: ChildComponent<Result & DefaultChildProps>, LoadingScreen?: React.ReactNode) => React.StatelessComponent<FetchArguments> {
-    return (Component, LoadingScreen = defaultLoadingScreen) => (props: FetchArguments) => {
+): (Component: ChildComponent<Result & DefaultChildProps>, LoadingScreen?: any) => React.StatelessComponent<FetchArguments> {
+    return (Component, LoadingScreen) => (props: FetchArguments) => {
         const [result, setResult] = React.useState(defaultState ? defaultState(props) : undefined);
+
         React.useEffect(() => {
             fetcher(props).then(setResult).catch((error: any) => {
                 console.error(`fetch failed: ${error}`);
             });
         }, whenChanges ? whenChanges(props) : []);
+
         // TODO workaround bc ts won't allow reactnode to be returned
         const ChildComponent = Component as React.StatelessComponent<Result & DefaultChildProps>;
-        return !!result ? (
-            <ChildComponent
-                {...result}
-                getData={getData(fetcher, props, setResult)}
-            />
-        ) : (
-            <div>
-                Loading...
-            </div>
-        );
+        if (!!result) {
+            return (
+                <ChildComponent
+                    {...result}
+                    getData={getData(fetcher, props, setResult)}
+                />
+            );
+        }
+        const Spinner = LoadingScreen || defaultLoadingScreen;
+        return <Spinner />;
     };
 }
