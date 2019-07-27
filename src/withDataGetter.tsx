@@ -10,7 +10,7 @@ type ChildComponent<O extends {}> = React.StatelessComponent<O>
 | React.ComponentClass<O>
 | ((props: O) => React.ReactNode);
 
-type DefaultChildProps = {
+export type DefaultChildProps = {
     getData: () => void;
 };
 
@@ -24,12 +24,12 @@ function getData<FetchArguments, Result>(
     });
 }
 
-export default function withDataGetter<FetchArguments, Result extends {}>(
-    fetcher: (input: FetchArguments) => Promise<Result>,
-    defaultState?: (props: FetchArguments) => Result,
-    whenChanges?: (props: FetchArguments) => any[],
-): (Component: ChildComponent<Result & DefaultChildProps>, LoadingScreen?: any) => React.StatelessComponent<FetchArguments> {
-    return (Component, LoadingScreen) => (props: FetchArguments) => {
+export default function withDataGetter<OuterProps extends {}, ChildProps extends (Result & DefaultChildProps), Result extends {}>(
+    fetcher: (input: OuterProps) => Promise<Result>,
+    defaultState?: (props: OuterProps) => Result,
+    whenChanges?: (props: OuterProps) => any[],
+): (Component: ChildComponent<ChildProps>, LoadingScreen?: any) => React.StatelessComponent<OuterProps> {
+    return (Component, LoadingScreen) => (props: OuterProps) => {
         const [result, setResult] = React.useState(defaultState ? defaultState(props) : undefined);
 
         React.useEffect(() => {
@@ -44,6 +44,7 @@ export default function withDataGetter<FetchArguments, Result extends {}>(
             return (
                 <ChildComponent
                     {...result}
+                    {...props}
                     getData={getData(fetcher, props, setResult)}
                 />
             );

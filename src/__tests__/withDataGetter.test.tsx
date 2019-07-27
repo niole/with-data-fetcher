@@ -1,12 +1,12 @@
 import * as React from 'react';
 import { mount } from 'enzyme';
-import withDataGetter from '../withDataGetter';
+import withDataGetter, { DefaultChildProps } from '../withDataGetter';
 
 describe('withDataGetter', () => {
-    const ChildComponent = (props:  { text: string }) => props.text;
+    const ChildComponent = (props:  { text: string } & DefaultChildProps) => props.text;
 
     it('should allow child to render', () => {
-        const WrappedComponent = withDataGetter<{}, { text: string }>(
+        const WrappedComponent = withDataGetter(
             async () => ({ text: 'fetched' }),
             () => ({ text: 'nothing' })
         )(ChildComponent);
@@ -17,14 +17,12 @@ describe('withDataGetter', () => {
     });
 
     it('should update child state on component did mount', done => {
-        const WrappedComponent = withDataGetter<{}, { text: string }>(
+        const WrappedComponent = withDataGetter(
             async () => ({ text: 'fetched' }),
             () => ({ text: 'nothing' })
         )(ChildComponent);
 
-        const wrapper = mount(
-            <WrappedComponent />
-        );
+        const wrapper = mount(<WrappedComponent />);
 
         setTimeout(() => {
             wrapper.update();
@@ -34,15 +32,16 @@ describe('withDataGetter', () => {
     });
 
     it('should update child state when dependent props change', done => {
-        const WrappedComponent = withDataGetter<{ query: string }, { text: string }>(
-            async ({ query }) => ({ text: query }),
+        type OuterProps = {
+            query: string;
+        };
+        const WrappedComponent = withDataGetter(
+            async ({ query }: OuterProps) => ({ text: query }),
             () => ({ text: 'nothing' }),
-            ({ query }) => [query],
+            ({ query }: OuterProps) => [query],
         )(ChildComponent);
 
-        const wrapper = mount(
-            <WrappedComponent query="A" />
-        );
+        const wrapper = mount(<WrappedComponent query="A" />);
 
         setTimeout(() => {
             wrapper.update();
@@ -58,35 +57,49 @@ describe('withDataGetter', () => {
     });
 
     it('should allow child specific props to update the child component', done => {
-        const WrappedComponent = withDataGetter<{ other: string; query: string }, { text: string }>(
-            async ({ query }) => ({ text: query }),
-            () => ({ text: 'nothing' }),
-            ({ query }) => [query],
-        )(ChildComponent);
+        type OuterProps = {
+            query: string;
+            other: string;
+        };
+        type InnerProps = {
+            other: string;
+        } & Result & DefaultChildProps;
+        type Result = {
+            text: string;
+        };
+        const MultiOutputChildComponent = (props: InnerProps) => <>{props.other}{props.text}</>;
 
-        const wrapper = mount(
-            <WrappedComponent query="A" other="Z" />
-        );
+        const WrappedComponent = withDataGetter<OuterProps, InnerProps, Result>(
+            async ({ query }: OuterProps) => ({ text: query }),
+            () => ({ text: 'nothing' }),
+            ({ query }: OuterProps) => [query],
+        )(MultiOutputChildComponent);
+
+        const wrapper = mount(<WrappedComponent query="A" other="Z" />);
 
         setTimeout(() => {
             wrapper.update();
-            expect(wrapper.text()).toBe('A');
+            expect(wrapper.text()).toBe('ZA');
 
             wrapper.setProps({ other: 'B' });
             setTimeout(() => {
                 wrapper.update();
-                expect(wrapper.text()).toBe('A');
+                expect(wrapper.text()).toBe('BA');
                 done();
             }, 10);
         }, 10);
     });
 
     it('should allow child specific props to pass to child and not trigger refetches', done => {
+        type OuterProps = {
+            query: string;
+            other: string;
+        };
         const spy = jest.fn(async ({ query }) => ({ text: query }));
-        const WrappedComponent = withDataGetter<{ other: string; query: string }, { text: string }>(
+        const WrappedComponent = withDataGetter(
             spy,
             () => ({ text: 'nothing' }),
-            ({ query }) => [query],
+            ({ query }: OuterProps) => [query],
         )(ChildComponent);
 
         const wrapper = mount(<WrappedComponent query="A" other="Z" />);
@@ -103,7 +116,7 @@ describe('withDataGetter', () => {
     });
 
     it('should show loading screen before fetch returns, default state exists, and child never rendered', () => {
-        const WrappedComponent = withDataGetter<{}, { text: string }>(
+        const WrappedComponent = withDataGetter(
             () => {
                 return new Promise((resolve) => {
                     setTimeout(() => {
@@ -119,7 +132,7 @@ describe('withDataGetter', () => {
     });
 
     it('should not show loading screen once initial fetch has finished', done => {
-        const WrappedComponent = withDataGetter<{}, { text: string }>(
+        const WrappedComponent = withDataGetter(
             () => {
                 return new Promise((resolve) => {
                     setTimeout(() => {
@@ -139,7 +152,7 @@ describe('withDataGetter', () => {
     });
 
     it('should not show loading screen if initial data is supplied', () => {
-        const WrappedComponent = withDataGetter<{}, { text: string }>(
+        const WrappedComponent = withDataGetter(
             () => {
                 return new Promise((resolve) => {
                     setTimeout(() => {
@@ -161,7 +174,7 @@ describe('withDataGetter', () => {
                 this is myu custom loading screen
             </div>
         );
-        const WrappedComponent = withDataGetter<{}, { text: string }>(
+        const WrappedComponent = withDataGetter(
             () => {
                 return new Promise((resolve) => {
                     setTimeout(() => {
