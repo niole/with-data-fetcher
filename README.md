@@ -15,7 +15,13 @@ This container gets you up and running with
 
 # Docs
 
-...
+**withDataGetter**
+* param **fetcher** - (outerProps) => Promise<resultData> - *required* function that takes the props passed to the composed child React component and returns a promise with the fetched data.
+* param **defaultState** - (outerProps) => defaultResultData - *optional* function that returns the default version of the result data. If not provided, the container will return the loading component until the result data has been fetched.
+* param **whenChanges** - (outerProps) => any[] - *optional" function that returns an array of dependencies, any of which change, will trigger the data to be fetched again.
+* returns **anonymous function**
+* * param **ChildComponent** *required* component to wrap
+* * param **LoadingScreen** *optional* loading component to show when no data available
 
 # Examples
 
