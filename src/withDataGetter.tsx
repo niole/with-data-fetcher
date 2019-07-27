@@ -26,7 +26,7 @@ function getData<FetchArguments, Result>(
 export default function withDataGetter<FetchArguments, Result extends {}>(
     fetcher: (input: FetchArguments) => Promise<Result>,
     defaultState?: (props: FetchArguments) => Result,
-    whenChanges?: (props: FetchArguments) => any,
+    whenChanges?: (props: FetchArguments) => any[],
 ): (Component: ChildComponent<Result & DefaultChildProps>, LoadingScreen?: React.ReactNode) => React.StatelessComponent<FetchArguments> {
     return (Component, LoadingScreen = defaultLoadingScreen) => (props: FetchArguments) => {
         const [result, setResult] = React.useState(defaultState ? defaultState(props) : undefined);
@@ -34,7 +34,7 @@ export default function withDataGetter<FetchArguments, Result extends {}>(
             fetcher(props).then(setResult).catch((error: any) => {
                 console.error(`fetch failed: ${error}`);
             });
-        }, whenChanges ? [whenChanges(props)] : []);
+        }, whenChanges ? whenChanges(props) : []);
         // TODO workaround bc ts won't allow reactnode to be returned
         const ChildComponent = Component as React.StatelessComponent<Result & DefaultChildProps>;
         return !!result ? (

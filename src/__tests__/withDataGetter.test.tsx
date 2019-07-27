@@ -33,16 +33,75 @@ describe('withDataGetter', () => {
         }, 10);
     });
 
-    xit('should update child state only when props change', done => {
+    it('should update child state when dependent props change', done => {
+        const WrappedComponent = withDataGetter<{ query: string }, { text: string }>(
+            async ({ query }) => ({ text: query }),
+            () => ({ text: 'nothing' }),
+            ({ query }) => [query],
+        )(ChildComponent);
 
+        const wrapper = mount(
+            <WrappedComponent query="A" />
+        );
+
+        setTimeout(() => {
+            wrapper.update();
+            expect(wrapper.text()).toBe('A');
+
+            wrapper.setProps({ query: 'B' });
+            setTimeout(() => {
+                wrapper.update();
+                expect(wrapper.text()).toBe('B');
+                done();
+            }, 10);
+        }, 10);
     });
 
-    xit('should allow child specific props to update the child component', done => {
+    it('should allow child specific props to update the child component', done => {
+        const WrappedComponent = withDataGetter<{ other: string; query: string }, { text: string }>(
+            async ({ query }) => ({ text: query }),
+            () => ({ text: 'nothing' }),
+            ({ query }) => [query],
+        )(ChildComponent);
 
+        const wrapper = mount(
+            <WrappedComponent query="A" other="Z" />
+        );
+
+        setTimeout(() => {
+            wrapper.update();
+            expect(wrapper.text()).toBe('A');
+
+            wrapper.setProps({ other: 'B' });
+            setTimeout(() => {
+                wrapper.update();
+                expect(wrapper.text()).toBe('A');
+                done();
+            }, 10);
+        }, 10);
     });
 
-    xit('should allow child specific props to pass to child and not trigger refetches', done => {
+    it('should allow child specific props to pass to child and not trigger refetches', done => {
+        const spy = jest.fn(async ({ query }) => ({ text: query }));
+        const WrappedComponent = withDataGetter<{ other: string; query: string }, { text: string }>(
+            spy,
+            () => ({ text: 'nothing' }),
+            ({ query }) => [query],
+        )(ChildComponent);
 
+        const wrapper = mount(
+            <WrappedComponent query="A" other="Z" />
+        );
+
+        setTimeout(() => {
+            wrapper.update();
+            wrapper.setProps({ other: 'B' });
+            setTimeout(() => {
+                wrapper.update();
+                expect(spy).toHaveBeenCalledTimes(1);
+                done();
+            }, 10);
+        }, 10);
     });
 
     xit('should show loading screen before fetch returns and child has never been rendered', done => {
