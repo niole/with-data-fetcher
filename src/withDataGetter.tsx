@@ -48,7 +48,6 @@ export default function withDataGetter<FetchArguments, Result extends {}>(
                 />
             );
         }
-        const Spinner = LoadingScreen || defaultLoadingScreen;
-        return <Spinner />;
+        return LoadingScreen || defaultLoadingScreen;
     };
 }
