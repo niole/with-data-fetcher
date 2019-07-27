@@ -1,6 +1,8 @@
 import * as React from 'react';
 
-type ChildComponent<O> = (outerProps: O) => JSX.Element;
+type ChildComponent<O extends {}> = React.StatelessComponent<O>
+| React.ComponentClass<O>
+| ((props: O) => React.ReactNode);
 
 type DefaultChildProps = {
     getData: () => void;
@@ -20,16 +22,18 @@ export default function withDataGetter<FetchArguments, Result extends {}>(
     fetcher: (input: FetchArguments) => Promise<Result>,
     defaultState?: (props: FetchArguments) => Result,
     whenChanges?: (props: FetchArguments) => any,
-): (Component: ChildComponent<Result & DefaultChildProps>) => ChildComponent<FetchArguments> {
-    return Component => props => {
+): (Component: ChildComponent<Result & DefaultChildProps>) => React.StatelessComponent<FetchArguments> {
+    return Component => (props: FetchArguments) => {
         const [result, setResult] = React.useState(defaultState ? defaultState(props) : undefined);
         React.useEffect(() => {
             fetcher(props).then(setResult).catch((error: any) => {
                 console.error(`fetch failed: ${error}`);
             });
         }, whenChanges ? [whenChanges(props)] : []);
+        // TODO workaround bc ts won't allow reactnode to be returned
+        const ChildComponent = Component as React.StatelessComponent<Result & DefaultChildProps>;
         return !!result ? (
-            <Component
+            <ChildComponent
                 {...result}
                 getData={getData(fetcher, props, setResult)}
             />
