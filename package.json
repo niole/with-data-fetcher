@@ -1,9 +1,13 @@
 {
   "name": "with-data-fetcher",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "",
   "main": "dist/withDataGetter.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
+    "publish": "npm i && npm test && npm pack && npm publish with-data-fetcher-$NEW_VERSION.tgz",
     "test": "jest",
     "test-dev": "jest --watch",
     "build": "rm -rf dist/* && tsc",

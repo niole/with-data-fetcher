@@ -1,3 +1,4 @@
 node_modules
 dist/*
 package-lock.json
+with-data-fetcher-*.tgz
