@@ -12,6 +12,7 @@ This container gets you up and running with
 * an optional initial state for your React component and
 * an optional loading screen component, which shows before the fetched data arrives.
 * works with **Typescript**, **React 16.8 >**
+* a function prop, **getData** is provided to the wrapped child component, which is used to fetch data at adhoc times
 
 # Docs
 
@@ -31,12 +32,15 @@ This container gets you up and running with
 import * as React from 'react';
 import withDataFetcher from 'with-data-fetcher';
 
-const DataRenderer = ({ otherData, data }: ChildProps) => {
+const DataRenderer = ({ otherData, data, getData }: ChildProps) => {
     return (
         <>
           <h1>
             {otherData}
           </h1>
+          <button onClick={() => getData({ whichData: 1 })}>
+            get second set of data
+          </button>
           <div>
             {data.map((d: string) => (
               <div>
@@ -55,7 +59,7 @@ const dataStore = [
 
 type OuterProps = { whichData: number };
 type FetchResult = { data: string[] };
-type ChildProps = FetchResult & { otherData: string }:
+type ChildProps = FetchResult & { otherData: string; getData: (args?: OuterProps) => void }:
 
 const ComposedComponent = withDataFetcher<OuterProps, ChildProps, FetchResult>(
     async ({ whichData }) => ({ data: dataStore[whichData] }),

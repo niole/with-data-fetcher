@@ -10,21 +10,24 @@ type ChildComponent<O extends {}> = React.StatelessComponent<O>
 | React.ComponentClass<O>
 | ((props: O) => React.ReactNode);
 
-export type DefaultChildProps = {
-    getData: () => void;
+export type DefaultChildProps<FetchArguments> = {
+    getData: (args?: FetchArguments) => void;
 };
 
 function getData<FetchArguments, Result>(
         fetcher: (input: FetchArguments) => Promise<Result>,
         props: FetchArguments,
         setResult: (result: any) => any
-    ): () => void {
-    return () => fetcher(props).then(setResult).catch((error: any) => {
-        console.error(`fetch failed: ${error}`);
-    });
+    ): (args?: FetchArguments) => void {
+    return args => {
+        const fetchInput = args || props;
+        return fetcher(fetchInput).then(setResult).catch((error: any) => {
+            console.error(`fetch failed: ${error}`);
+        });
+    };
 }
 
-export default function withDataGetter<OuterProps extends {}, ChildProps extends (Result & DefaultChildProps), Result extends {}>(
+export default function withDataGetter<OuterProps extends {}, ChildProps extends (Result & DefaultChildProps<OuterProps>), Result extends {}>(
     fetcher: (input: OuterProps) => Promise<Result>,
     defaultState?: (props: OuterProps) => Result,
     whenChanges?: (props: OuterProps) => any[],
@@ -39,7 +42,7 @@ export default function withDataGetter<OuterProps extends {}, ChildProps extends
         }, whenChanges ? whenChanges(props) : []);
 
         // TODO workaround bc ts won't allow reactnode to be returned
-        const ChildComponent = Component as React.StatelessComponent<Result & DefaultChildProps>;
+        const ChildComponent = Component as React.StatelessComponent<Result & DefaultChildProps<OuterProps>>;
         if (!!result) {
             return (
                 <ChildComponent

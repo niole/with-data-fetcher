@@ -3,7 +3,7 @@ import { mount } from 'enzyme';
 import withDataGetter, { DefaultChildProps } from '../withDataGetter';
 
 describe('withDataGetter', () => {
-    const ChildComponent = (props:  { text: string } & DefaultChildProps) => props.text;
+    const ChildComponent = (props:  { text: string } & DefaultChildProps<{}>) => props.text;
 
     it('should allow child to render', () => {
         const WrappedComponent = withDataGetter(
@@ -63,7 +63,7 @@ describe('withDataGetter', () => {
         };
         type InnerProps = {
             other: string;
-        } & Result & DefaultChildProps;
+        } & Result & DefaultChildProps<OuterProps>;
         type Result = {
             text: string;
         };
@@ -187,5 +187,42 @@ describe('withDataGetter', () => {
         const wrapper = mount(<WrappedComponent />);
 
         expect(wrapper.find(CustomLoader)).toHaveLength(1);
+    });
+
+    it('should allow arbitrary fetching if data via child context', done => {
+        type Result = {
+            data: number[];
+        };
+        type OuterProps = { whichData: number };
+        type ChildProps = Result & DefaultChildProps<OuterProps>;
+        const ChildView = ({ data, getData }: ChildProps) => (
+            <div>
+                <button onClick={() => getData({ whichData: 1 })} />
+                <div>
+                    {data.join(',')}
+                </div>
+            </div>
+        );
+        const WrappedComponent = withDataGetter<OuterProps, ChildProps, Result>(
+            async ({ whichData }: OuterProps) => {
+                if (whichData === 0) {
+                    return { data: [1, 2, 3] };
+                }
+                return { data: [4, 5, 6] };
+            },
+        )(ChildView);
+
+        const wrapper = mount(<WrappedComponent whichData={0} />);
+
+        setTimeout(() => {
+            wrapper.update();
+            wrapper.find('button').props().onClick({} as React.MouseEvent);
+
+            setTimeout(() => {
+                wrapper.update();
+                expect(wrapper.text().indexOf([4, 5, 6].join(',')) > -1).toBe(true)
+                done();
+            }, 10);
+        }, 10);
     });
 });
